@@ -5,6 +5,16 @@
 #include "fatfs.h"
 
 
+
+extern "C" void SysTick_Handler(void)
+{
+	HAL_IncTick();
+	HAL_SYSTICK_IRQHandler();
+}
+
+
+#pragma region defines
+
 #define APPLICATION_ADDRESS    0x08008400//main firmware start address
 #define FLASH_END_ADDRESS
 
@@ -13,32 +23,54 @@
 #define FLASH_PAGE_SIZE    ((uint16_t)0x800)
 #else
 #define FLASH_PAGE_SIZE    ((uint16_t)0x400)
-#endif
+#endif	  
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-	void SysTick_Handler(void)
+#pragma endregion
+
+
+extern "C" SD_HandleTypeDef hsd;
+
+
+void SystemClock_Config(void);
+static void SDIO_SD_Init(void);
+static void GPIO_Init(void);
+void SystemClock_Config(void);
+
+
+int main()
+{
+	HAL_Init();
+	SystemClock_Config();
+
+	GPIO_Init();
+	SDIO_SD_Init();
+	FATFS_Init();
+	FRESULT result;
+	HAL_Delay(2U);
+
+	// смонтировать диск
+	FATFS FATFS_Obj;
+	uint16_t n = 48;
+	
+	result = f_mount(&FATFS_Obj, "", 1);
+	if (result != FR_OK)
 	{
-		HAL_IncTick();
-		HAL_SYSTICK_IRQHandler();
+		//printf("Ошибка монтирования диска %d\r\n", result);
 	}
-#ifdef __cplusplus
+	n = 50;
 }
-#endif
 
-SD_HandleTypeDef hsd;
 
 void Go_To_User_App(void)
 {	
 	typedef void(*pFunction)(void);
 	pFunction Jump_To_Application;
 
-	__disable_irq();  //disable IRQn
+	__disable_irq();    //disable IRQn
 		
-	Jump_To_Application = (pFunction)(*(uint32_t*)(APPLICATION_ADDRESS + 4));     //set reset address
-	  __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);             //set SP                                        
-	Jump_To_Application();   		                        //Jump to main firmware	
+	Jump_To_Application = (pFunction)(*(uint32_t*)(APPLICATION_ADDRESS + 4));       //set reset address
+	  __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);               //set SP                                        
+	Jump_To_Application();     		                        //Jump to main firmware	
 }
 
 void SystemClock_Config(void)
@@ -60,10 +92,10 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLN = 168;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	RCC_OscInitStruct.PLL.PLLQ = 7;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-	{
-		//Error_Handler();
-	}
+//	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+//	{
+//		//Error_Handler();
+//	}
 	/** Initializes the CPU, AHB and APB busses clocks 
 	*/
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
@@ -73,10 +105,10 @@ void SystemClock_Config(void)
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
-	{
-		//Error_Handler();
-	}
+//	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+//	{
+//		//Error_Handler();
+//	}
 }
 
 /**
@@ -84,15 +116,14 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_SDIO_SD_Init(void)
+static void SDIO_SD_Init(void)
 {
 
-	__HAL_RCC_SDIO_CLK_ENABLE();
-  
+	__HAL_RCC_SDIO_CLK_ENABLE();  
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 	
-	/* USER CODE BEGIN SDIO_Init 0 */
+
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 
 	                      | GPIO_PIN_12;
@@ -108,10 +139,9 @@ static void MX_SDIO_SD_Init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 	GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
 	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-	/* USER CODE END SDIO_Init 0 */
 
-	/* USER CODE BEGIN SDIO_Init 1 */
-	/* USER CODE END SDIO_Init 1 */
+	
+	
 	hsd.Instance = SDIO;
 	hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
 	hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
@@ -119,9 +149,6 @@ static void MX_SDIO_SD_Init(void)
 	hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
 	hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
 	hsd.Init.ClockDiv = 0;
-	/* USER CODE BEGIN SDIO_Init 2 */
-
-	/* USER CODE END SDIO_Init 2 */
 
 }
 
@@ -130,7 +157,7 @@ static void MX_SDIO_SD_Init(void)
   * @param None
   * @retval None
   */
-static void MX_GPIO_Init(void)
+static void GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
@@ -149,32 +176,4 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-}
-
-int main()
-{
-	HAL_Init();
-	SystemClock_Config();
-
-	/* USER CODE BEGIN SysInit */
-
-	/* USER CODE END SysInit */
-
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_SDIO_SD_Init();
-	MX_FATFS_Init();
-	FRESULT result;
-	HAL_Delay(2U);
-
-	// смонтировать диск
-	FATFS FATFS_Obj;
-	uint16_t n = 48;
-	
-	result = f_mount(&FATFS_Obj, "", 1);
-	if (result != FR_OK)
-	{
-		//printf("Ошибка монтирования диска %d\r\n", result);
-	}
-	n = 50;
 }
