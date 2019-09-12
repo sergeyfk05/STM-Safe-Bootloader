@@ -49,8 +49,6 @@
       <CPPLanguageStandard>CPP1Z</CPPLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemGroup>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
@@ -287,6 +285,5 @@
     <ClInclude Include="$(BSP_ROOT)\FatFs\src\ffconf_template.h" />
     <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.h" />
     <ClInclude Include="$(BSP_ROOT)\FatFs\src\integer.h" />
-    <ClInclude Include="$(BSP_ROOT)\BSP\ConfigTemplates\ffconf.h" />
   </ItemGroup>
 </Project>

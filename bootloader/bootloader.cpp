@@ -41,10 +41,12 @@ int main()
 {
 	HAL_Init();
 	SystemClock_Config();
-
+	
 	GPIO_Init();
 	SDIO_SD_Init();
 	FATFS_Init();
+	
+	
 	FRESULT result;
 	HAL_Delay(2U);
 
@@ -52,7 +54,9 @@ int main()
 	FATFS FATFS_Obj;
 	uint16_t n = 48;
 	
-	result = f_mount(&FATFS_Obj, "", 1);
+	
+	TCHAR drive  = (TCHAR)0;
+	result = f_mount(&FATFS_Obj, &drive, 1);
 	if (result != FR_OK)
 	{
 		//printf("Ошибка монтирования диска %d\r\n", result);
