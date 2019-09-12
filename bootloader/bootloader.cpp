@@ -1,5 +1,6 @@
 #include <stm32f4xx_hal.h>
 #include <stm32_hal_legacy.h>
+#include <stm32f4xx_hal_flash.h>
 
 #include "ffconf.h"
 #include "fatfs.h"
@@ -15,15 +16,21 @@ extern "C" void SysTick_Handler(void)
 
 #pragma region defines
 
-#define APPLICATION_ADDRESS    0x08008400//main firmware start address
-#define FLASH_END_ADDRESS
-
-//page size
-#if defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_CL) || defined (STM32F10X_XL)
-#define FLASH_PAGE_SIZE    ((uint16_t)0x800)
-#else
-#define FLASH_PAGE_SIZE    ((uint16_t)0x400)
-#endif	  
+#define FLASH_PAGE_SIZE		2048 						//2 Kbyte per page
+#define FLASH_START_ADDR	0x08000000					//Origin
+#define FLASH_MAX_SIZE		0x00080000					//Max FLASH size - 512 Kbyte
+#define FLASH_END_ADDR		(FLASH_START_ADDR + FLASH_MAX_SIZE)		//FLASH end address
+#define FLASH_BOOT_START_ADDR	(FLASH_START_ADDR)				//Bootloader start address
+#define FLASH_BOOT_SIZE		0x00010000					//64 Kbyte for bootloader
+#define FLASH_USER_START_ADDR	(FLASH_BOOT_START_ADDR + FLASH_BOOT_SIZE)	//User application start address
+//#define FLASH_USER_SIZE		0x00032000					//200 Kbyte for user application
+#define FLASH_USER_SIZE (FLASH_MAX_SIZE - FLASH_BOOT_SIZE)   //all free memory for user application
+//#define FLASH_MSD_START_ADDR	(FLASH_USER_START_ADDR + FLASH_USER_SIZE)	//USB MSD start address
+//#define FLASH_MSD_SIZE		0x00032000					//200 Kbyte for USB MASS Storage
+#define FLASH_OTHER_START_ADDR	(FLASH_MSD_START_ADDR + FLASH_MSD_SIZE)		//Other free memory start address
+#define FLASH_OTHER_SIZE	(FLASH_END_ADDR - FLASH_OTHER_START_ADDR)	//Free memory size
+#define APP_BLOCK_TRANSFER_SIZE 512
+#define SIZE_OF_U32 sizeof(uint32_t)
 
 #pragma endregion
 
@@ -35,6 +42,9 @@ void SystemClock_Config(void);
 static void SDIO_SD_Init(void);
 static void GPIO_Init(void);
 void SystemClock_Config(void);
+void GoToUserApp(void);
+void CopyAppToUserMemory(FIL* appFile, uint64_t appSize);
+void PeriphDeInit(void);
 
 
 int main()
@@ -65,16 +75,139 @@ int main()
 }
 
 
-void Go_To_User_App(void)
-{	
-	typedef void(*pFunction)(void);
-	pFunction Jump_To_Application;
+void PeriphDeInit(void)
+{
+	HAL_SD_DeInit(&hsd);
+	HAL_GPIO_DeInit(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12);
+	HAL_GPIO_DeInit(GPIOD, GPIO_PIN_2);
+	HAL_DeInit();
+}
 
-	__disable_irq();    //disable IRQn
-		
-	Jump_To_Application = (pFunction)(*(uint32_t*)(APPLICATION_ADDRESS + 4));       //set reset address
-	  __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);               //set SP                                        
-	Jump_To_Application();     		                        //Jump to main firmware	
+void boot(void)
+{
+	
+	FATFS FATFS_Obj;
+	TCHAR drive  = (TCHAR)0;
+	FRESULT FATFS_Status = f_mount(&FATFS_Obj, &drive, 1);
+	if (FATFS_Status == FR_OK)
+	{
+		FIL appFile;
+		TCHAR file = (TCHAR)"/APP.BIN";
+		FRESULT FILE_Status = f_open(&appFile, &file, FA_READ);
+		if (FILE_Status == FR_OK)
+		{
+			uint64_t appSize = f_size(&appFile);
+
+			uint64_t i;
+			for (i = 0; i < appSize; i++) //Byte-to-byte compare files in MSD_MEM and USER_MEM
+				{
+					UINT readBytes;
+					char appBuffer;
+					f_read(&appFile, &appBuffer, 1, &readBytes);
+
+					if (*((volatile uint8_t*)(FLASH_USER_START_ADDR + i)) != appBuffer[0]) 
+					{
+						//if byte of USER_MEM != byte of MSD_MEM
+						break;
+					}
+				}
+
+			if (i != appSize)//=> was done "break" instruction in for(;;) cycle => new firmware in MSD_FLASH
+			{
+				CopyAppToUserMemory(&appFile, appSize);
+			}
+
+			FILE_Status = f_close(&appFile);
+			TCHAR drive  = (TCHAR)0;
+			FATFS_Status = f_mount(NULL, &drive, 1);
+
+			
+			PeriphDeInit();
+			GoToUserApp();
+		}
+		else //if FILE_Status != FR_OK
+			{
+				if (FILE_Status == FR_NO_FILE)
+				{
+					//No file error
+				}
+				else //if FILE_Status != FR_NO_FILE
+					{
+						//Other error
+					}
+				TCHAR drive  = (TCHAR)0;
+				FATFS_Status = f_mount(NULL, &drive, 1);
+				while (true);
+			}
+	}
+	else //FATFS_Status != FR_OK
+		{
+			//FatFS mount error
+			while(true);
+		}
+}
+
+void CopyAppToUserMemory(FIL* appFile, uint64_t appSize)
+{
+	f_lseek(appFile, 0);  //Go to the fist position of file
+
+	UINT readBytes;
+	uint64_t appTailSize = appSize % APP_BLOCK_TRANSFER_SIZE;
+	uint64_t appBodySize = appSize - appTailSize;
+	uint64_t appAddrPointer = 0;
+
+	for (uint64_t i = 0; i < ((appSize / FLASH_PAGE_SIZE) + 1); i++) //Erase n + 1 pages for new application
+		{
+			
+			while (FLASH_GetStatus() != FLASH_COMPLETE) ;
+			FLASH_ErasePage(FLASH_USER_START_ADDR + i * FLASH_PAGE_SIZE);
+		}
+
+	
+	char appBuffer[APP_BLOCK_TRANSFER_SIZE];
+	for (uint64_t i = 0; i < appBodySize; i += APP_BLOCK_TRANSFER_SIZE)
+	{
+		/*
+		 * For example, size of File1 = 1030 bytes
+		 * File1 = 2 * 512 bytes + 6 bytes
+		 * "body" = 2 * 512, "tail" = 6
+		 * Let's write "body" and "tail" to MCU FLASH byte after byte with 512-byte blocks
+		 */
+		f_read(appFile, appBuffer, APP_BLOCK_TRANSFER_SIZE, &readBytes);  //Read 512 byte from file
+		for(uint64_t j = 0 ; j < APP_BLOCK_TRANSFER_SIZE ; j += SIZE_OF_U32) //write 512 byte to FLASH
+		{
+			while (FLASH_GetStatus() != FLASH_COMPLETE) ;
+			FLASH_ProgramWord(FLASH_USER_START_ADDR + i + j, *((volatile uint32_t*)(appBuffer + j)));
+		}
+		appAddrPointer += APP_BLOCK_TRANSFER_SIZE;  //pointer to current position in FLASH for write
+	}
+
+	f_read(appFile, appBuffer, appTailSize, &readBytes);  //Read "tail" that < 512 bytes from file
+
+	while((appTailSize % SIZE_OF_U32) != 0)		//if appTailSize MOD 4 != 0 (seems not possible, but still...)
+	{
+		appTailSize++; 				//increase the tail to a multiple of 4
+		appBuffer[appTailSize - 1] = 0xFF; 	//and put 0xFF in this tail place
+	}
+
+	for (uint64_t i = 0; i < appTailSize; i += SIZE_OF_U32) //write "tail" to FLASH
+		{
+			while (FLASH_GetStatus() != FLASH_COMPLETE) ;
+			FLASH_ProgramWord(FLASH_USER_START_ADDR + appAddrPointer + i, *((volatile uint32_t*)(appBuffer + i))); 
+		}
+}
+
+
+void GoToUserApp(void)
+{	
+	uint32_t appJumpAddress;
+	void(*GoToApp)(void);
+
+	appJumpAddress = *((volatile uint32_t*)(FLASH_USER_START_ADDR + 4));
+	GoToApp = (void(*)(void))appJumpAddress;
+	SCB->VTOR = FLASH_USER_START_ADDR;
+	__set_MSP(*((volatile uint32_t*) FLASH_USER_START_ADDR));   //stack pointer (to RAM) for USER app in this address
+	GoToApp();    		                        //Jump to main firmware	
 }
 
 void SystemClock_Config(void)
@@ -169,15 +302,4 @@ static void GPIO_Init(void)
 	__HAL_RCC_GPIOH_CLK_ENABLE();
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
-
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-
-	/*Configure GPIO pin : PD12 */
-	GPIO_InitStruct.Pin = GPIO_PIN_12;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
 }
