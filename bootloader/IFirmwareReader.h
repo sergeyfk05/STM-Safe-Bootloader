@@ -34,5 +34,12 @@ namespace Firmware
 		  */
 		void Reset();
 		
+		/**
+		  * @brief  Return size of firmware
+		  * 
+		  * @retval Size of firmware.
+		  */
+		uint64_t GetSize();
+		
 	};
 }

@@ -36,16 +36,15 @@ extern "C" void SysTick_Handler(void)
 
 
 SD_HandleTypeDef hsd;
-
-
 void SystemClock_Config(void);
 static void SDIO_SD_Init(void);
 static void GPIO_Init(void);
-void SystemClock_Config(void);
+
+
 void GoToUserApp(void);
 void PeriphDeInit(void);
-bool Copy(FirmwareReaderFromSD* reader);
-void CopyAppToUserMemory(FIL* appFile, uint64_t appSize);
+void Copy(IFirmwareReader* sdReader, IFirmwareReader* flashReader);
+void check(IFirmwareReader* reader, IFirmwareReader* writer, void(*copy)(IFirmwareReader*, IFirmwareReader*));
 
 void boot(void);
 int main()
@@ -58,81 +57,99 @@ int main()
 	FATFS_Init();	
 
 	//boot();
-	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 }; //APP.bin
-	FirmwareReaderFromSD* reader = new FirmwareReaderFromSD(file);		
+	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 };     //APP.bin
+	IFirmwareReader* sdReader = new FirmwareReaderFromSD(file);	
+	IFirmwareReader* flashReader = new FirmwareReaderFromFlash(FLASH_USER_START_ADDR);
 	
 	HAL_FLASH_Unlock();
 	__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);	
 	
-	ReaderResult* result;
-	for(uint64_t i = 0;; i += 4)
+	if (sdReader->GetSize() != flashReader->GetSize())
 	{
-		result = reader->Read(Word);
-		
-		if (!result->isOK)
-		{
-			delete result;
-			break;			
-		}	
-		
-		if (result->isEnd)
-		{
-			delete result;
-			break;			
-		}	
-		
-		if (*((volatile uint32_t*)(FLASH_USER_START_ADDR + i)) != *(volatile uint32_t*)&result->data)
-		{
-			delete result;
-			Copy(reader);
-			break;
-		}	
+		Copy(sdReader, flashReader);
 	}
-	
+	else
+	{			
+		check(sdReader, flashReader, &Copy);
+	}
 	PeriphDeInit();
 	GoToUserApp();
-	
-
 }
 
-bool Copy(FirmwareReaderFromSD* reader)
+void Copy(IFirmwareReader* sdReader, IFirmwareReader* flashReader)
 {
-	reader->Reset();	
-	
-	for (uint64_t i = FLASH_USER_SECTOR_START; i < FLASH_SECTORS_COUNT; i++)
-	{
-		FLASH_Erase_Sector(i, FLASH_VOLTAGE_RANGE_3);
-		HAL_Delay(500);
-	}
-	
-	HAL_Delay(100);
+	sdReader->Reset();
+	flashReader->Reset();
 	
 	ReaderResult* result;
-	for (uint64_t i = 0;; i += 4)
+	while (true)
 	{
-		result = reader->Read(Word);
+		result = sdReader->Read(DoubleWord);
 		
-		if (!result->isOK)
+		if (result->isOK)
 		{
-			delete result;
-			return false;	
+			flashReader->Write(DoubleWord, *(volatile uint64_t*)result->data);
+			if (result->isEnd)
+				break;
 		}
-				
 		
-    	 HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, FLASH_USER_START_ADDR + i, *(volatile uint32_t*)&result->data);
-		
-		if (result->isEnd)
+		if (!result->isOK && result->isEnd)
 		{
-			delete result;
-			break;
+			while (true)
+			{
+				result = sdReader->Read(Byte);
+		
+				if (result->isOK)
+				{
+					flashReader->Write(Byte, *(volatile uint8_t*)result->data);
+					if (result->isEnd)
+						break;
+				}
+			}
 		}
-		delete result;	
 	}
-	
-	return true;
 }
 	
+void check(IFirmwareReader* sdReader, IFirmwareReader* flashReader, void(*copy)(IFirmwareReader*, IFirmwareReader*))
+{
+	ReaderResult* sdResult;
+	ReaderResult* flashResult;
 	
+	while (true)
+	{
+		sdResult = sdReader->Read(DoubleWord);
+		flashResult = flashReader->Read(DoubleWord);
+		
+		if ((!sdResult->isOK) && sdResult->isEnd)
+		{
+			while (true)
+			{
+				sdResult = sdReader->Read(Byte);
+				flashResult = flashReader->Read(Byte);				
+				
+				if (*(volatile uint8_t*)(sdResult->data) != *(volatile uint8_t*)(flashResult->data))
+				{
+					//copy
+					copy(sdReader, flashReader);
+					break;
+				}
+				
+				if (sdResult->isEnd)
+					break;
+			}
+			break;
+		}
+		
+		
+		if (*(volatile uint64_t*)(sdResult->data) != *(volatile uint64_t*)(flashResult->data))
+		{
+			//copy
+			copy(sdReader, flashReader);
+			break;
+		}
+	}
+}
+
 
 
 void PeriphDeInit(void)
@@ -153,7 +170,7 @@ void GoToUserApp(void)
 	GoToApp = (void(*)(void))(appJumpAddress);
 	__disable_irq();
 	SCB->VTOR = FLASH_USER_START_ADDR;
-	__set_MSP(*((volatile uint32_t*) FLASH_USER_START_ADDR));      //stack pointer (to RAM) for USER app in this address
+	__set_MSP(*((volatile uint32_t*) FLASH_USER_START_ADDR));         //stack pointer (to RAM) for USER app in this address
 	
 	PeriphDeInit();
 	GoToApp();
