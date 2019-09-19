@@ -5,7 +5,7 @@
 
 namespace Firmware
 {
-	class IReader
+	class IFirmwareReader
 	{
 	public:
 		ReaderResult* Read(OperationType typeRead);

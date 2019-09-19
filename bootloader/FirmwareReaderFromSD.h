@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stm32f4xx_hal.h>
-#include <IReader.h>
+#include <IFirmwareReader.h>
 #include "ffconf.h"
 #include "fatfs.h"
 
@@ -10,7 +10,7 @@ extern "C" {
 #endif
 	namespace Firmware
 	{
-		class FirmwareReaderFromSD : public IReader
+		class FirmwareReaderFromSD : public IFirmwareReader
 		{
 		public:
 			/**

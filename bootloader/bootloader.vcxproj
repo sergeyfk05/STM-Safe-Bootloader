@@ -78,7 +78,7 @@
     <ClCompile Include="sd_diskio.c" />
     <ClCompile Include="system_stm32f4xx.c" />
     <ClInclude Include="FirmwareReaderFromFlash.h" />
-    <ClInclude Include="IReader.h" />
+    <ClInclude Include="IFirmwareReader.h" />
     <ClInclude Include="ReaderResult.h" />
     <ClInclude Include="OperationType.h" />
     <None Include="stm32.props" />

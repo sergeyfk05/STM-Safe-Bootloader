@@ -767,7 +767,7 @@
     <ClInclude Include="FirmwareReaderFromFlash.h">
       <Filter>Header files\Device-specific files\Firmware</Filter>
     </ClInclude>
-    <ClInclude Include="IReader.h">
+    <ClInclude Include="IFirmwareReader.h">
       <Filter>Header files\Device-specific files\Firmware</Filter>
     </ClInclude>
   </ItemGroup>

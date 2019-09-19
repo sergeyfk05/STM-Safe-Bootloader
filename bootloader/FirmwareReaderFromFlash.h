@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stm32f4xx_hal.h>
-#include <IReader.h>
+#include <IFirmwareReader.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,7 +9,7 @@ extern "C" {
 	
 	namespace Firmware
 	{
-		class FirmwareReaderFromFlash : public IReader
+		class FirmwareReaderFromFlash : public IFirmwareReader
 		{
 		public:
 			/**
