@@ -44,6 +44,9 @@ extern "C" {
 			  */
 			bool ShiftPointer(int64_t shift);
 			
+			/**
+			  * @brief  Reset state.
+			  */
 			void Reset();
 		
 		private:
