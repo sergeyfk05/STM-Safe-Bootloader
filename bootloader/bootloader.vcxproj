@@ -64,8 +64,11 @@
     <ClCompile Include="bootloader.cpp" />
     <ClCompile Include="bsp_driver_sd.c" />
     <ClCompile Include="fatfs.c" />
+    <ClCompile Include="FirwareReader.cpp" />
     <ClCompile Include="sd_diskio.c" />
     <ClCompile Include="system_stm32f4xx.c" />
+    <ClInclude Include="ReaderResult.h" />
+    <ClInclude Include="TypeRead.h" />
     <None Include="stm32.props" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f407xx.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal.c" />
@@ -157,6 +160,7 @@
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_utils.c" />
     <ClInclude Include="bsp_driver_sd.h" />
     <ClInclude Include="fatfs.h" />
+    <ClInclude Include="FirmwareReader.h" />
     <ClInclude Include="sd_diskio.h" />
     <ClInclude Include="stm32f4xx_hal_conf.h" />
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h" />
