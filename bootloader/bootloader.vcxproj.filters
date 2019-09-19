@@ -43,7 +43,7 @@
     <Filter Include="Header files\Device-specific files\Firmware">
       <UniqueIdentifier>{b5f32096-4447-41ee-9ad3-64b7e16e2aad}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source files\Firmware">
+    <Filter Include="Source files\Device-specific files\Firmware">
       <UniqueIdentifier>{455d11b3-1078-4fae-bc4e-0babff1aa49f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -732,8 +732,14 @@
     <ClCompile Include="fatfs.c">
       <Filter>Source files\Device-specific files\FatFs</Filter>
     </ClCompile>
-    <ClCompile Include="FirwareReader.cpp">
-      <Filter>Source files\Firmware</Filter>
+    <ClCompile Include="FirmwareReaderFromFlash.cpp">
+      <Filter>Source files\Device-specific files\Firmware</Filter>
+    </ClCompile>
+    <ClCompile Include="FirmwareReaderFromSD.cpp">
+      <Filter>Source files\Device-specific files\Firmware</Filter>
+    </ClCompile>
+    <ClCompile Include="ReaderResult.cpp">
+      <Filter>Source files\Device-specific files\Firmware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -749,13 +755,19 @@
     <ClInclude Include="ffconf.h">
       <Filter>Header files\Device-specific files\FatFs</Filter>
     </ClInclude>
-    <ClInclude Include="FirmwareReader.h">
-      <Filter>Header files\Device-specific files\Firmware</Filter>
-    </ClInclude>
-    <ClInclude Include="TypeRead.h">
-      <Filter>Header files\Device-specific files\Firmware</Filter>
-    </ClInclude>
     <ClInclude Include="ReaderResult.h">
+      <Filter>Header files\Device-specific files\Firmware</Filter>
+    </ClInclude>
+    <ClInclude Include="OperationType.h">
+      <Filter>Header files\Device-specific files\Firmware</Filter>
+    </ClInclude>
+    <ClInclude Include="FirmwareReaderFromSD.h">
+      <Filter>Header files\Device-specific files\Firmware</Filter>
+    </ClInclude>
+    <ClInclude Include="FirmwareReaderFromFlash.h">
+      <Filter>Header files\Device-specific files\Firmware</Filter>
+    </ClInclude>
+    <ClInclude Include="IReader.h">
       <Filter>Header files\Device-specific files\Firmware</Filter>
     </ClInclude>
   </ItemGroup>

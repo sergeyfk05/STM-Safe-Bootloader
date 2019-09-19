@@ -1,8 +1,8 @@
 #include <stm32f4xx_hal.h>
 #include <stm32_hal_legacy.h>
 #include <stm32f4xx_hal_flash.h>
-#include "FirmwareReader.h"
-
+#include "FirmwareReaderFromSD.h"
+#include "FirmwareReaderFromFlash.h"
 
 using namespace Firmware;
 
@@ -44,7 +44,7 @@ static void GPIO_Init(void);
 void SystemClock_Config(void);
 void GoToUserApp(void);
 void PeriphDeInit(void);
-bool Copy(FirmwareReader* reader);
+bool Copy(FirmwareReaderFromSD* reader);
 void CopyAppToUserMemory(FIL* appFile, uint64_t appSize);
 
 void boot(void);
@@ -59,7 +59,7 @@ int main()
 
 	//boot();
 	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 }; //APP.bin
-	FirmwareReader* reader = new FirmwareReader(file);		
+	FirmwareReaderFromSD* reader = new FirmwareReaderFromSD(file);		
 	
 	HAL_FLASH_Unlock();
 	__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);	
@@ -95,7 +95,7 @@ int main()
 
 }
 
-bool Copy(FirmwareReader* reader)
+bool Copy(FirmwareReaderFromSD* reader)
 {
 	reader->Reset();	
 	

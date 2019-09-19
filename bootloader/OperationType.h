@@ -2,7 +2,7 @@
 
 namespace Firmware
 {
-	enum TypeRead
+	enum OperationType
 	{
 		Byte = 1,
 		HalfWord = 2,

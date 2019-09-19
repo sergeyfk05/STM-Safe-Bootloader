@@ -1,8 +1,7 @@
 #pragma once
 
 #include <stm32f4xx_hal.h>
-#include "TypeRead.h"
-#include "ReaderResult.h"
+#include <IReader.h>
 #include "ffconf.h"
 #include "fatfs.h"
 
@@ -11,14 +10,14 @@ extern "C" {
 #endif
 	namespace Firmware
 	{
-		class FirmwareReader
+		class FirmwareReaderFromSD : public IReader
 		{
 		public:
 			/**
 			 * @brief  Constructor
 			 * @param  fileName  Name of firmware file.
 			 */
-			FirmwareReader(const TCHAR* fileName);
+			FirmwareReaderFromSD(const TCHAR* fileName);
 
 			/**
 			  * @brief  Read the firmware
@@ -26,7 +25,24 @@ extern "C" {
 			  * 
 			  * @retval ReaderResult firmware bytes
 			  */
-			ReaderResult* Read(TypeRead typeRead);
+			ReaderResult* Read(OperationType typeRead);
+			
+			/**
+			  * @brief  Write the firmware.
+			  * @param  typeRead  Indicate the count of write byte need.
+			  * 
+			  * @retval ReaderResult firmware bytes
+			  */
+			bool Write(OperationType typeWrite, uint64_t value);
+			
+			
+			/**
+			  * @brief  Shift pointer of firmware.
+			  * @param  shift  The number of bytes the pointer will shift
+			  * 
+			  * @retval bool If true - all is OK. If false - error.
+			  */
+			bool ShiftPointer(int64_t shift);
 			
 			void Reset();
 		
@@ -35,7 +51,6 @@ extern "C" {
 			FIL mAppFile;
 			TCHAR mFileName[258];
 			bool mIsInit;
-			char mBuffer[512];
 			
 			/**
 			  * @brief  Init variables for read firmware.

@@ -1,8 +1,9 @@
-#include "FirmwareReader.h"
+#include "FirmwareReaderFromSD.h"
 #include <stm32f4xx_hal.h>
 namespace Firmware
 {
-	FirmwareReader::FirmwareReader(const TCHAR* file_name) : mIsInit(false)
+	FirmwareReaderFromSD::FirmwareReaderFromSD(const TCHAR* file_name)
+		: mIsInit(false)
 	{
 		for (uint16_t i = 0; i < 258; i++)
 		{
@@ -13,9 +14,9 @@ namespace Firmware
 		}
 	}
 	
-	ReaderResult* FirmwareReader::Read(TypeRead typeRead)
+	ReaderResult* FirmwareReaderFromSD::Read(OperationType typeRead)
 	{
-		ReaderResult* result = new ReaderResult();
+		ReaderResult* result = new ReaderResult(typeRead);
 		result->isOK = false;
 		result->isEnd = false;
 		
@@ -36,7 +37,36 @@ namespace Firmware
 		return result;
 	}
 	
-	void FirmwareReader::Reset()
+	bool FirmwareReaderFromSD::Write(OperationType typeWrite, uint64_t value)
+	{
+		//it's readonly class
+		return false;
+	}
+	
+	bool FirmwareReaderFromSD::ShiftPointer(int64_t shift)
+	{
+		if (shift == 0)
+			return true;
+		
+		if (shift < 0)
+		{
+			if (mAppFile.fptr + shift < 0)
+				return false;
+			
+			f_lseek(&mAppFile, mAppFile.fptr + shift);
+			return true;
+		}
+		else
+		{
+			if (mAppFile.fptr + shift > mAppFile.obj.objsize)
+				return false;
+			
+			f_lseek(&mAppFile, mAppFile.fptr + shift);
+			return true;
+		}
+	}
+	
+	void FirmwareReaderFromSD::Reset()
 	{
 		if (!mIsInit && !Init())
 			return;
@@ -44,7 +74,7 @@ namespace Firmware
 		f_lseek(&mAppFile, 0);
 	}
 	
-	bool FirmwareReader::Init()
+	bool FirmwareReaderFromSD::Init()
 	{
 		TCHAR drive  = (TCHAR)0;
 		FRESULT status = f_mount(&mFatfsObj, &drive, 1);
