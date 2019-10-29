@@ -51,7 +51,7 @@ int main()
 {
 	HAL_Init();
 	SystemClock_Config();
-
+	
 	FATFS_Init();	
 
 	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 };              //APP.bin
@@ -109,7 +109,7 @@ void CopyFirmware(IFirmwareReader* reader, IFirmwareReader* writer)
 		}
 		
 		//if firmware is ended
-		if (result->status == End)
+		if(result->status == End)			
 			break;
 		
 		//if throw some exception
@@ -203,6 +203,8 @@ void PeriphDeInit(void)
 
 void GoToUserApp(void)
 {	
+	PeriphDeInit();
+	
 	uint32_t appJumpAddress;
 	void(*GoToApp)(void);
 
@@ -212,7 +214,7 @@ void GoToUserApp(void)
 	SCB->VTOR = FLASH_USER_START_ADDR;
 	__set_MSP(*((volatile uint32_t*) FLASH_USER_START_ADDR));                  //stack pointer (to RAM) for USER app in this address
 
-	//PeriphDeInit();
+	
 	GoToApp();
 }
 
