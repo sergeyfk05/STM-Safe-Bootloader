@@ -1,6 +1,7 @@
 #include "FirmwareReaderFromFlash.h"
 #include <stm32f4xx_hal.h>
 #include <stm32f4xx_hal_flash.h>
+#include <math.h>
 
 namespace Firmware
 {
@@ -9,58 +10,40 @@ namespace Firmware
 		, mOffset(0)
 		, mIsInit(false)
 	{
-
+		return;
 	}
 	
 	void FirmwareReaderFromFlash::Init()
-	{
-		int8_t startSector = -1;
-		if ((mStartAddress >= SECTOR_ADDR0) &&(mStartAddress < SECTOR_ADDR1))
-			startSector = 0;
-		else if ((mStartAddress >= SECTOR_ADDR1) &&(mStartAddress < SECTOR_ADDR2))
-			startSector = 1;
-		else if ((mStartAddress >= SECTOR_ADDR2) &&(mStartAddress < SECTOR_ADDR3))
-			startSector = 2;		
-		else if ((mStartAddress >= SECTOR_ADDR3) &&(mStartAddress < SECTOR_ADDR4))
-			startSector = 3;		
-		else if ((mStartAddress >= SECTOR_ADDR4) &&(mStartAddress < SECTOR_ADDR5))
-			startSector = 4;		
-		else if ((mStartAddress >= SECTOR_ADDR5) &&(mStartAddress < SECTOR_ADDR6))
-			startSector = 5;		
-		else if ((mStartAddress >= SECTOR_ADDR6) &&(mStartAddress < SECTOR_ADDR7))
-			startSector = 6;		
-		else if ((mStartAddress >= SECTOR_ADDR7) &&(mStartAddress < SECTOR_ADDR8))
-			startSector = 7;		
-		else if ((mStartAddress >= SECTOR_ADDR8) &&(mStartAddress < SECTOR_ADDR9))
-			startSector = 8;		
-		else if ((mStartAddress >= SECTOR_ADDR9) &&(mStartAddress < SECTOR_ADDR10))
-			startSector = 9;		
-		else if ((mStartAddress >= SECTOR_ADDR10) &&(mStartAddress < SECTOR_ADDR11))
-			startSector = 10;		
-		else if (mStartAddress >= SECTOR_ADDR11)
-			startSector = 11;
+	{	
+		HAL_FLASH_Unlock();
+		__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);	
 		
-		if (startSector > -1)
-			for (; startSector < SECTORS_COUNT; startSector++)
-			{
-				FLASH_Erase_Sector(startSector, FLASH_VOLTAGE_RANGE_3);
-				if (FLASH_WaitForLastOperation(1000) != HAL_OK)
-					break;
-			}
+		FLASH_EraseInitTypeDef fei;
+		uint32_t error;
+		fei.TypeErase = FLASH_TYPEERASE_SECTORS;
+		fei.Sector = START_SECTOR;
+		fei.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+		fei.NbSectors = 12 - START_SECTOR;
+		HAL_FLASHEx_Erase(&fei, &error);
+		
+		
+		mIsInit = true;
+		HAL_FLASH_Lock();
 	}
 	
 	ReaderResult* FirmwareReaderFromFlash::Read(OperationType typeRead)
 	{
 		ReaderResult* result = new ReaderResult(typeRead);
 		
-		if (mOffset + typeRead > GetSize())
+		//check for going outside the address
+		if(mStartAddress + mOffset > MAX_FLASH_ADDR)
 		{
-			result->isEnd = true;
-			result->isOK = false;
+			result->status = End;
 			return result;
 		}
 		
-		switch (typeRead)
+		//convert OperationType to count of bytes
+		switch(typeRead)
 		{
 		case Byte: *(uint8_t*)result->data = *((volatile uint8_t*)(mStartAddress + mOffset));
 			break;
@@ -72,26 +55,27 @@ namespace Firmware
 			break;
 		}
 		
-		mOffset += typeRead;
-		
-		result->isOK = true;		
-		result->isEnd = GetSize() >= mOffset ? true : false;
+		//check for real readed bytes;
+		result->status = this->ShiftPointer(typeRead) ? OK : TooMuchBytes;
 		
 		return result;
 	}
 		
 	bool FirmwareReaderFromFlash::Write(OperationType typeWrite, uint64_t value)
-	{
-		
-		if (!mIsInit)
-		{
+	{		
+		//init check
+		if(!mIsInit)
 			Init();
-			mIsInit = true;
-		}
 		
-		if (mOffset + typeWrite > GetSize())
+		HAL_FLASH_Unlock();
+		__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);	
+		
+		//check for going outside the address
+		if(mStartAddress + mOffset + typeWrite > MAX_FLASH_ADDR)
 			return false;
 		
+		
+		//convert OperationType to FlashProgramType
 		uint16_t type;
 		switch (typeWrite)
 		{
@@ -109,22 +93,27 @@ namespace Firmware
 		HAL_FLASH_Program(type, mStartAddress + mOffset, value);
 		
 		mOffset += typeWrite;
+		
+		HAL_FLASH_Lock();
 		return true;
 	}
 	
 	void FirmwareReaderFromFlash::Reset()
 	{
+		//reset pointer
 		mOffset = 0;
 	}
 	
 	bool FirmwareReaderFromFlash::ShiftPointer(int64_t shift)
 	{
-		if (shift == 0)
+		//check by zero
+		if(shift == 0)
 			return true;
 		
 		if (shift < 0)
 		{
-			if (mOffset + shift < 0)
+			//check for going outside the address
+			if(mOffset + shift < 0)
 				return false;
 			
 			mOffset += shift;
@@ -132,11 +121,17 @@ namespace Firmware
 		}
 		else
 		{
-			if (mOffset + shift > GetSize())
+			//check for going outside the address
+			if(mStartAddress + mOffset + shift > MAX_FLASH_ADDR + 1)
 				return false;
 			
 			mOffset += shift;
 			return true;
 		}
 	}
+	
+	FirmwareReaderFromFlash::~FirmwareReaderFromFlash()
+	{
+	}
+
 }

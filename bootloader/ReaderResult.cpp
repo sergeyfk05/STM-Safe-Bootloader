@@ -4,7 +4,11 @@ namespace Firmware
 {
 	ReaderResult::ReaderResult(OperationType type)
 	{
-		sizeBuffer = type;
 		data = malloc(type);
+	}
+	ReaderResult::~ReaderResult()
+	{
+		free(data);
+		
 	}
 }

@@ -16,35 +16,35 @@
     <Filter Include="Source files\Device-specific files">
       <UniqueIdentifier>{7048147e-21a5-4508-b65c-5da5773a7315}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source files\Device-specific files\HAL">
-      <UniqueIdentifier>{5d711c90-d569-4c9d-ad85-f0a9a6ccff36}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source files\Device-specific files\LL">
-      <UniqueIdentifier>{8a9742bf-11f0-4ed1-984e-5f21b186df12}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header files\Device-specific files">
       <UniqueIdentifier>{d4087de9-9e88-492a-82e0-c4473ce824dd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header files\Device-specific files\HAL">
-      <UniqueIdentifier>{a8a128de-b65d-4ba3-b2f8-c518e3caf201}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header files\Device-specific files\LL">
-      <UniqueIdentifier>{20470e21-0754-4991-8fdc-665fb248e848}</UniqueIdentifier>
-    </Filter>
     <Filter Include="VisualGDB settings">
       <UniqueIdentifier>{4a141011-4590-4211-ba15-39b52ac98d8f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source files\Device-specific files\FatFs">
-      <UniqueIdentifier>{86895fb4-0002-4860-a585-4a64a70abc06}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header files\Device-specific files\FatFs">
-      <UniqueIdentifier>{1b77a3bd-9176-45c2-966c-0917942d92d5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header files\Device-specific files\Firmware">
       <UniqueIdentifier>{b5f32096-4447-41ee-9ad3-64b7e16e2aad}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source files\Device-specific files\Firmware">
       <UniqueIdentifier>{455d11b3-1078-4fae-bc4e-0babff1aa49f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\FatFs">
+      <UniqueIdentifier>{4bfdf56b-9413-4f22-9445-bc317a615ed4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\HAL">
+      <UniqueIdentifier>{bea4294b-caa8-434e-b36b-9bc044cb015c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\LL">
+      <UniqueIdentifier>{05612b45-b5c9-4cb2-901f-cca3e457947f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\FatFs">
+      <UniqueIdentifier>{fb77fcf0-a739-4b5b-9ade-1ddf39956ea2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\HAL">
+      <UniqueIdentifier>{6d5bedf8-9787-47df-abe8-1024d236389e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\LL">
+      <UniqueIdentifier>{39ace1ca-9644-47f9-9154-e30a41a28d71}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +59,42 @@
     </None>
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f407xx.c">
       <Filter>Source files\Device-specific files</Filter>
+    </ClCompile>
+    <ClInclude Include="stm32f4xx_hal_conf.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <None Include="bootloader-Debug.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="bootloader-Release.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="stm32.xml">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <ClCompile Include="FirmwareReaderFromFlash.cpp">
+      <Filter>Source files\Device-specific files\Firmware</Filter>
+    </ClCompile>
+    <ClCompile Include="FirmwareReaderFromSD.cpp">
+      <Filter>Source files\Device-specific files\Firmware</Filter>
+    </ClCompile>
+    <ClCompile Include="ReaderResult.cpp">
+      <Filter>Source files\Device-specific files\Firmware</Filter>
+    </ClCompile>
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\diskio.c">
+      <Filter>Source files\Device-specific files\FatFs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff.c">
+      <Filter>Source files\Device-specific files\FatFs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.c">
+      <Filter>Source files\Device-specific files\FatFs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\syscall.c">
+      <Filter>Source files\Device-specific files\FatFs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\unicode.c">
+      <Filter>Source files\Device-specific files\FatFs</Filter>
     </ClCompile>
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal.c">
       <Filter>Source files\Device-specific files\HAL</Filter>
@@ -321,8 +357,20 @@
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_utils.c">
       <Filter>Source files\Device-specific files\LL</Filter>
     </ClCompile>
-    <ClInclude Include="stm32f4xx_hal_conf.h">
-      <Filter>Header files</Filter>
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\diskio.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ffconf_template.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\integer.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
     </ClInclude>
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h">
       <Filter>Header files\Device-specific files\HAL</Filter>
@@ -684,77 +732,17 @@
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_wwdg.h">
       <Filter>Header files\Device-specific files\LL</Filter>
     </ClInclude>
-    <None Include="bootloader-Debug.vgdbsettings">
-      <Filter>VisualGDB settings</Filter>
-    </None>
-    <None Include="bootloader-Release.vgdbsettings">
-      <Filter>VisualGDB settings</Filter>
-    </None>
-    <None Include="stm32.xml">
-      <Filter>VisualGDB settings</Filter>
-    </None>
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\diskio.c">
-      <Filter>Source files\Device-specific files\FatFs</Filter>
-    </ClCompile>
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff.c">
-      <Filter>Source files\Device-specific files\FatFs</Filter>
-    </ClCompile>
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.c">
-      <Filter>Source files\Device-specific files\FatFs</Filter>
-    </ClCompile>
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\syscall.c">
-      <Filter>Source files\Device-specific files\FatFs</Filter>
-    </ClCompile>
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\unicode.c">
-      <Filter>Source files\Device-specific files\FatFs</Filter>
-    </ClCompile>
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\diskio.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ffconf_template.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\integer.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
     <ClCompile Include="bsp_driver_sd.c">
-      <Filter>Source files\Device-specific files\FatFs</Filter>
-    </ClCompile>
-    <ClCompile Include="sd_diskio.c">
       <Filter>Source files\Device-specific files\FatFs</Filter>
     </ClCompile>
     <ClCompile Include="fatfs.c">
       <Filter>Source files\Device-specific files\FatFs</Filter>
     </ClCompile>
-    <ClCompile Include="FirmwareReaderFromFlash.cpp">
-      <Filter>Source files\Device-specific files\Firmware</Filter>
-    </ClCompile>
-    <ClCompile Include="FirmwareReaderFromSD.cpp">
-      <Filter>Source files\Device-specific files\Firmware</Filter>
-    </ClCompile>
-    <ClCompile Include="ReaderResult.cpp">
-      <Filter>Source files\Device-specific files\Firmware</Filter>
+    <ClCompile Include="sd_diskio.c">
+      <Filter>Source files\Device-specific files\FatFs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="sd_diskio.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
-    <ClInclude Include="bsp_driver_sd.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
-    <ClInclude Include="fatfs.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
-    <ClInclude Include="ffconf.h">
-      <Filter>Header files\Device-specific files\FatFs</Filter>
-    </ClInclude>
     <ClInclude Include="ReaderResult.h">
       <Filter>Header files\Device-specific files\Firmware</Filter>
     </ClInclude>
@@ -769,6 +757,18 @@
     </ClInclude>
     <ClInclude Include="IFirmwareReader.h">
       <Filter>Header files\Device-specific files\Firmware</Filter>
+    </ClInclude>
+    <ClInclude Include="bsp_driver_sd.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="fatfs.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="sd_diskio.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="ffconf.h">
+      <Filter>Header files\Device-specific files\FatFs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -17,22 +17,35 @@ namespace Firmware
 	ReaderResult* FirmwareReaderFromSD::Read(OperationType typeRead)
 	{
 		ReaderResult* result = new ReaderResult(typeRead);
-		result->isOK = false;
-		result->isEnd = false;
 		
+		//check Init
 		if (!mIsInit)
-			if(!Init())
+			if (!Init())
+			{
+				result->status = Error;
 				return result;
+			}
 		
 		UINT readBytes;		
 		uint8_t g = typeRead;
 		FRESULT readResult = f_read(&mAppFile, (void*)result->data, typeRead, &readBytes);
 		
-		if (readResult == FR_OK)
-			result->isOK = true;
-		
-		if ((readBytes != typeRead))
-			result->isEnd = true;
+		//set status
+		if(readResult == FR_OK && readBytes == typeRead)
+		{
+			result->status = OK;
+		}
+		else if(readResult != FR_OK)
+		{
+			result->status = Error;
+		}
+		else if(readResult == FR_OK && readBytes == 0)
+			result->status = End; 
+		else if(readResult == FR_OK && readBytes != typeRead)
+		{
+			result->status = TooMuchBytes;
+			this->ShiftPointer(-1 * readBytes);
+		}
 		
 		return result;
 	}
@@ -50,6 +63,7 @@ namespace Firmware
 		
 		if (shift < 0)
 		{
+			//check for going outside the address
 			if (mAppFile.fptr + shift < 0)
 				return false;
 			
@@ -58,6 +72,7 @@ namespace Firmware
 		}
 		else
 		{
+			//check for going outside the address
 			if (mAppFile.fptr + shift > mAppFile.obj.objsize)
 				return false;
 			
@@ -76,11 +91,13 @@ namespace Firmware
 	
 	bool FirmwareReaderFromSD::Init()
 	{
+		//mount drive
 		TCHAR drive  = (TCHAR)0;
 		FRESULT status = f_mount(&mFatfsObj, &drive, 1);
 		if (status != FR_OK)
 			return false;
 		
+		//open firmware file
 		status = f_open(&mAppFile, mFileName, FA_READ);
 		if (status != FR_OK)
 			return false;
@@ -88,6 +105,19 @@ namespace Firmware
 		
 		mIsInit = true;
 		return true;
+	}
+	
+	FirmwareReaderFromSD::~FirmwareReaderFromSD()
+	{
+		//close file
+		f_close(&mAppFile);
+		TCHAR drive  = (TCHAR)0;
+		
+		//unmount drive
+		f_mount(NULL, &drive, 0);
+		
+		//free memory
+		free(&mFatfsObj);
 	}
 	
 }

@@ -4,6 +4,8 @@
 #include "FirmwareReaderFromSD.h"
 #include "FirmwareReaderFromFlash.h"
 
+#include "fatfs.h"
+
 using namespace Firmware;
 
 
@@ -24,7 +26,7 @@ extern "C" void SysTick_Handler(void)
 #define FLASH_MAX_SIZE		0x00080000					//Max FLASH size - 512 Kbyte
 #define FLASH_END_ADDR		(FLASH_START_ADDR + FLASH_MAX_SIZE)		//FLASH end address
 #define FLASH_BOOT_START_ADDR	(FLASH_START_ADDR)				//Bootloader start address
-#define FLASH_BOOT_SIZE		0x00008000					//32 Kbyte for bootloader
+#define FLASH_BOOT_SIZE		0x00008000					//64 Kbyte for bootloader
 #define FLASH_USER_START_ADDR	(FLASH_BOOT_START_ADDR + FLASH_BOOT_SIZE)	//User application start address
 #define FLASH_USER_SIZE (FLASH_MAX_SIZE - FLASH_BOOT_SIZE)   //all free memory for user application
 #define FLASH_OTHER_START_ADDR	(FLASH_MSD_START_ADDR + FLASH_MSD_SIZE)		//Other free memory start address
@@ -37,117 +39,155 @@ extern "C" void SysTick_Handler(void)
 
 SD_HandleTypeDef hsd;
 void SystemClock_Config(void);
-static void SDIO_SD_Init(void);
-static void GPIO_Init(void);
 
 
 void GoToUserApp(void);
 void PeriphDeInit(void);
-void Copy(IFirmwareReader* sdReader, IFirmwareReader* flashReader);
-void check(IFirmwareReader* reader, IFirmwareReader* writer, void(*copy)(IFirmwareReader*, IFirmwareReader*));
+void CopyFirmware(IFirmwareReader* reader, IFirmwareReader* writer);
+void CheckFirmwareAndCopy(IFirmwareReader* source, IFirmwareReader* destination, void(*copyMethod)(IFirmwareReader*, IFirmwareReader*));
 
 void boot(void);
 int main()
 {
 	HAL_Init();
 	SystemClock_Config();
-	
-	GPIO_Init();
-	SDIO_SD_Init();
+
 	FATFS_Init();	
 
-	//boot();
-	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 };     //APP.bin
+	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 };              //APP.bin
 	IFirmwareReader* sdReader = new FirmwareReaderFromSD(file);	
 	IFirmwareReader* flashReader = new FirmwareReaderFromFlash(FLASH_USER_START_ADDR);
 	
-	HAL_FLASH_Unlock();
-	__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);	
-	
-	if (sdReader->GetSize() != flashReader->GetSize())
-	{
-		Copy(sdReader, flashReader);
-	}
-	else
-	{			
-		check(sdReader, flashReader, &Copy);
-	}
-	PeriphDeInit();
+
+		
+	CheckFirmwareAndCopy(sdReader, flashReader, &CopyFirmware);
 	GoToUserApp();
 }
 
-void Copy(IFirmwareReader* sdReader, IFirmwareReader* flashReader)
+void CopyFirmware(IFirmwareReader* reader, IFirmwareReader* writer)
 {
-	sdReader->Reset();
-	flashReader->Reset();
-	
+	reader->Reset();
+	writer->Reset();
 	ReaderResult* result;
-	while (true)
+	OperationType typeRead = Word;
+	uint64_t data;
+	
+	while (1)
 	{
-		result = sdReader->Read(DoubleWord);
+		free(result);
+		result = reader->Read(typeRead);
 		
-		if (result->isOK)
+		if (result->status == OK)
 		{
-			flashReader->Write(DoubleWord, *(volatile uint64_t*)result->data);
-			if (result->isEnd)
-				break;
-		}
-		
-		if (!result->isOK && result->isEnd)
-		{
-			while (true)
+			//read data value from heap
+			switch (typeRead)
 			{
-				result = sdReader->Read(Byte);
-		
-				if (result->isOK)
-				{
-					flashReader->Write(Byte, *(volatile uint8_t*)result->data);
-					if (result->isEnd)
-						break;
-				}
+			case DoubleWord:
+				data = *(uint64_t*)result->data;
+				break;
+			case Word: 
+				data = *(uint32_t*)result->data;
+				break;
+			case HalfWord: 
+				data = *(uint16_t*)result->data;
+				break;
+			case Byte: 
+				data = *(uint8_t*)result->data;
+				break;
 			}
+			
+			writer->Write(typeRead, data);
+			
+			continue;
 		}
+		
+		//if tried read too much bytes
+		if (result->status == TooMuchBytes)
+		{
+			typeRead = Byte;
+			continue;
+		}
+		
+		//if firmware is ended
+		if (result->status == End)
+			break;
+		
+		//if throw some exception
+		if (result->status == Error)
+			break;
 	}
 }
 	
-void check(IFirmwareReader* sdReader, IFirmwareReader* flashReader, void(*copy)(IFirmwareReader*, IFirmwareReader*))
+void CheckFirmwareAndCopy(IFirmwareReader* source, IFirmwareReader* destination, void(*copyMethod)(IFirmwareReader*, IFirmwareReader*))
 {
-	ReaderResult* sdResult;
-	ReaderResult* flashResult;
+	ReaderResult* sourceResult = nullptr;
+	ReaderResult* destinationResult = nullptr;
+	
+	OperationType readType = Word;
+	bool isEqual = true;
 	
 	while (true)
-	{
-		sdResult = sdReader->Read(DoubleWord);
-		flashResult = flashReader->Read(DoubleWord);
+	{	
+		//clear memory heap
+		free(sourceResult);
+		free(destinationResult);
 		
-		if ((!sdResult->isOK) && sdResult->isEnd)
+		//reading
+		sourceResult = source->Read(readType);
+		destinationResult = destination->Read(readType);
+		
+		
+		if ((sourceResult->status == OK) && (destinationResult->status == OK))
 		{
-			while (true)
+			//compare source and destination data values
+			for(uint8_t i = 0 ; i < readType ; i++)
 			{
-				sdResult = sdReader->Read(Byte);
-				flashResult = flashReader->Read(Byte);				
-				
-				if (*(volatile uint8_t*)(sdResult->data) != *(volatile uint8_t*)(flashResult->data))
+				if (*(uint8_t*)sourceResult->data != *(uint8_t*)destinationResult->data)
 				{
-					//copy
-					copy(sdReader, flashReader);
+					isEqual = false;
 					break;
 				}
-				
-				if (sdResult->isEnd)
-					break;
 			}
-			break;
-		}
+			if (!isEqual)
+				break;
+			
+			continue;
+		}			
 		
-		
-		if (*(volatile uint64_t*)(sdResult->data) != *(volatile uint64_t*)(flashResult->data))
+		//if tried read too much bytes
+		if ((sourceResult->status == TooMuchBytes) || (destinationResult->status == TooMuchBytes))
 		{
-			//copy
-			copy(sdReader, flashReader);
+			//decrease reading count of bytes
+			readType = Byte;
+			continue;
+		}
+		
+		
+		//if destination reader returned error then copy
+		if(destinationResult->status == Error)
+		{
+			isEqual = false;
 			break;
 		}
+		//if source reader returned error then stoped uploading firmware
+		if(sourceResult->status == Error)
+		{
+			break;
+		}
+		
+		//if destination firmware is ended, but source firmware isn't ended then copy.
+		//Because source firmware more than destination => firmwares aren't equals
+		if(destinationResult->status == End && sourceResult->status != End)
+			break;
+			
+		//if source readed is ended then exit from methos
+		if(sourceResult->status == End)
+			break;	
+			
 	}
+	
+	if (!isEqual)
+		copyMethod(source, destination);
 }
 
 
@@ -170,9 +210,9 @@ void GoToUserApp(void)
 	GoToApp = (void(*)(void))(appJumpAddress);
 	__disable_irq();
 	SCB->VTOR = FLASH_USER_START_ADDR;
-	__set_MSP(*((volatile uint32_t*) FLASH_USER_START_ADDR));         //stack pointer (to RAM) for USER app in this address
-	
-	PeriphDeInit();
+	__set_MSP(*((volatile uint32_t*) FLASH_USER_START_ADDR));                  //stack pointer (to RAM) for USER app in this address
+
+	//PeriphDeInit();
 	GoToApp();
 }
 
@@ -212,59 +252,4 @@ void SystemClock_Config(void)
 	{
 		//Error_Handler();
 	}
-}
-
-/**
-  * @brief SDIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void SDIO_SD_Init(void)
-{
-
-	__HAL_RCC_SDIO_CLK_ENABLE();  
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOD_CLK_ENABLE();
-	
-
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 
-	                      | GPIO_PIN_12;
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-	GPIO_InitStruct.Pin = GPIO_PIN_2;
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
-	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-	
-	
-	hsd.Instance = SDIO;
-	hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
-	hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
-	hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
-	hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
-	hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-	hsd.Init.ClockDiv = 1;
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void GPIO_Init(void)
-{
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-
-	/* GPIO Ports Clock Enable */
-	__HAL_RCC_GPIOH_CLK_ENABLE();
-	__HAL_RCC_GPIOD_CLK_ENABLE();
-	__HAL_RCC_GPIOC_CLK_ENABLE();
 }

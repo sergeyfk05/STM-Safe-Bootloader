@@ -44,12 +44,18 @@
       <CPPLanguageStandard>CPP1Z</CPPLanguageStandard>
       <AdditionalIncludeDirectories>;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions />
+      <CLanguageStandard />
+      <FunctionSections>true</FunctionSections>
+      <DataSections>true</DataSections>
+      <Optimization>O0</Optimization>
     </ClCompile>
     <Link>
       <AdditionalLinkerInputs>;%(Link.AdditionalLinkerInputs)</AdditionalLinkerInputs>
       <LibrarySearchDirectories>;%(Link.LibrarySearchDirectories)</LibrarySearchDirectories>
       <AdditionalLibraryNames>;%(Link.AdditionalLibraryNames)</AdditionalLibraryNames>
       <LinkerScript>STM32F407VE_flash.lds</LinkerScript>
+      <AdditionalOptions />
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|VisualGDB'">
@@ -57,6 +63,9 @@
       <CPPLanguageStandard>CPP1Z</CPPLanguageStandard>
       <AdditionalIncludeDirectories>;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG=1;RELEASE=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>Os</Optimization>
+      <InlineFunctions>true</InlineFunctions>
+      <LinkTimeOptimization>true</LinkTimeOptimization>
     </ClCompile>
     <Link>
       <AdditionalLinkerInputs>;%(Link.AdditionalLinkerInputs)</AdditionalLinkerInputs>
@@ -77,12 +86,26 @@
     <ClCompile Include="ReaderResult.cpp" />
     <ClCompile Include="sd_diskio.c" />
     <ClCompile Include="system_stm32f4xx.c" />
+    <ClInclude Include="bsp_driver_sd.h" />
+    <ClInclude Include="fatfs.h" />
+    <ClInclude Include="ffconf.h" />
     <ClInclude Include="FirmwareReaderFromFlash.h" />
     <ClInclude Include="IFirmwareReader.h" />
     <ClInclude Include="ReaderResult.h" />
     <ClInclude Include="OperationType.h" />
     <None Include="stm32.props" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f407xx.c" />
+    <ClInclude Include="FirmwareReaderFromSD.h" />
+    <ClInclude Include="sd_diskio.h" />
+    <ClInclude Include="stm32f4xx_hal_conf.h" />
+    <None Include="bootloader-Debug.vgdbsettings" />
+    <None Include="bootloader-Release.vgdbsettings" />
+    <None Include="stm32.xml" />
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\diskio.c" />
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff.c" />
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.c" />
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\syscall.c" />
+    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\unicode.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_adc.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_adc_ex.c" />
@@ -170,11 +193,11 @@
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_usart.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_usb.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_utils.c" />
-    <ClInclude Include="bsp_driver_sd.h" />
-    <ClInclude Include="fatfs.h" />
-    <ClInclude Include="FirmwareReaderFromSD.h" />
-    <ClInclude Include="sd_diskio.h" />
-    <ClInclude Include="stm32f4xx_hal_conf.h" />
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\diskio.h" />
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff.h" />
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ffconf_template.h" />
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.h" />
+    <ClInclude Include="$(BSP_ROOT)\FatFs\src\integer.h" />
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h" />
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_adc.h" />
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_adc_ex.h" />
@@ -295,20 +318,6 @@
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h" />
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_utils.h" />
     <ClInclude Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_wwdg.h" />
-    <None Include="bootloader-Debug.vgdbsettings" />
-    <None Include="bootloader-Release.vgdbsettings" />
-    <None Include="stm32.xml" />
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\diskio.c" />
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff.c" />
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.c" />
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\syscall.c" />
-    <ClCompile Include="$(BSP_ROOT)\FatFs\src\option\unicode.c" />
-    <ClInclude Include="ffconf.h" />
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\diskio.h" />
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff.h" />
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ffconf_template.h" />
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\ff_gen_drv.h" />
-    <ClInclude Include="$(BSP_ROOT)\FatFs\src\integer.h" />
   </ItemGroup>
   <ItemGroup>
     <LinkerScript Include="STM32F407VE_flash.lds" />

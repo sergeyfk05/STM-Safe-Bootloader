@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stm32f4xx_hal.h>
-#include <IFirmwareReader.h>
+#include "IFirmwareReader.h"
 
 #define SECTORS_COUNT 12
 #define SECTOR_ADDR0 0x08000000
@@ -16,7 +16,8 @@
 #define SECTOR_ADDR9 0x080A0000
 #define SECTOR_ADDR10 0x080C0000
 #define SECTOR_ADDR11 0x080E0000
-
+#define MAX_FLASH_ADDR 0x080FFFFF
+#define START_SECTOR FLASH_SECTOR_2
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,12 +63,8 @@ extern "C" {
 			  */
 			void Reset();
 			
-			/**
-			  * @brief  Return size of firmware
-			  * 
-			  * @retval Size of firmware.
-			  */
-			uint64_t GetSize();
+			
+			~FirmwareReaderFromFlash();
 		
 		private:
 			const uint32_t mStartAddress;

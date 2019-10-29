@@ -5,14 +5,25 @@
 
 namespace Firmware
 {
+	
+	enum FR_Status
+	{
+		OK,
+		Error,
+		End,
+		TooMuchBytes
+	};
+	
 	class ReaderResult
 	{
 	public:
 		ReaderResult(OperationType type);
-		uint8_t sizeBuffer;
+		//uint8_t sizeBuffer;
 		void* data;
-		bool isOK;
-		bool isEnd;
+		FR_Status status;
+		~ReaderResult();
 	};
+	
+
 }
 

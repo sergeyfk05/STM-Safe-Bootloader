@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stm32f4xx_hal.h>
-#include <IFirmwareReader.h>
+#include "IFirmwareReader.h"
 #include "ffconf.h"
 #include "fatfs.h"
 
@@ -48,6 +48,8 @@ extern "C" {
 			  * @brief  Reset state.
 			  */
 			void Reset();
+			
+			~FirmwareReaderFromSD();
 		
 		private:
 			FATFS mFatfsObj;
