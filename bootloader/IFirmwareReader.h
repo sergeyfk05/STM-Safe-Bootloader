@@ -15,6 +15,7 @@ namespace Firmware
 		  * @retval ReaderResult firmware bytes
 		  */
 		virtual ReaderResult* Read(OperationType typeRead) = 0;
+		
 		/**
 		  * @brief  Write the firmware.
 		  * @param  typeRead  Indicate the count of write byte need.
@@ -22,6 +23,7 @@ namespace Firmware
 		  * @retval ReaderResult firmware bytes
 		  */
 		virtual bool Write(OperationType typeWrite, uint64_t value) = 0;
+		
 		/**
 		  * @brief  Shift pointer of firmware.
 		  * @param  shift  The number of bytes the pointer will shift
@@ -29,10 +31,21 @@ namespace Firmware
 		  * @retval bool If true - all is OK. If false - error.
 		  */
 		virtual bool ShiftPointer(int64_t shift) = 0;	
+		
 		/**
 		  * @brief  Reset state.
 		  */
 		virtual void Reset() = 0;
+		
+		/**
+		  * @brief  Check correctness of the firmware.
+		  * 
+		  * @retval bool If true - firmware is correctness. If false - error.
+		  */
+		virtual bool CheckCorrectness()
+		{
+			return true;
+		}
 		
 		virtual ~IFirmwareReader()
 		{

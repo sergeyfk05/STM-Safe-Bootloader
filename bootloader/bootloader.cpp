@@ -126,6 +126,11 @@ void CheckFirmwareAndCopy(IFirmwareReader* source, IFirmwareReader* destination,
 	OperationType readType = Word;
 	bool isEqual = true;
 	
+	//if at least one firmware isn't correctness than break flashing process and go to main application.
+	if (!(source->CheckCorrectness()) || !(destination->CheckCorrectness()))
+		return;
+
+	
 	while (true)
 	{	
 		//clear memory heap
