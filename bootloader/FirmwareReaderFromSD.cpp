@@ -19,12 +19,11 @@ namespace Firmware
 		ReaderResult* result = new ReaderResult(typeRead);
 		
 		//check Init
-		if (!mIsInit)
-			if (!Init())
-			{
-				result->status = Error;
-				return result;
-			}
+		if(!Init())
+		{
+			result->status = Error;
+			return result;
+		}
 		
 		UINT readBytes;		
 		uint8_t g = typeRead;
@@ -50,12 +49,6 @@ namespace Firmware
 		return result;
 	}
 	
-	bool FirmwareReaderFromSD::Write(OperationType typeWrite, uint64_t value)
-	{
-		//it's readonly class
-		return false;
-	}
-	
 	bool FirmwareReaderFromSD::ShiftPointer(int64_t shift)
 	{
 		if (shift == 0)
@@ -64,7 +57,7 @@ namespace Firmware
 		if (shift < 0)
 		{
 			//check for going outside the address
-			if (mAppFile.fptr + shift < 0)
+			if(mAppFile.fptr + shift < 0)
 				return false;
 			
 			f_lseek(&mAppFile, mAppFile.fptr + shift);
@@ -73,7 +66,7 @@ namespace Firmware
 		else
 		{
 			//check for going outside the address
-			if (mAppFile.fptr + shift > mAppFile.obj.objsize)
+			if(mAppFile.fptr + shift > mAppFile.obj.objsize)
 				return false;
 			
 			f_lseek(&mAppFile, mAppFile.fptr + shift);
@@ -91,6 +84,9 @@ namespace Firmware
 	
 	bool FirmwareReaderFromSD::Init()
 	{
+		if (mIsInit)
+			return true;
+		
 		//mount drive
 		TCHAR drive  = (TCHAR)0;
 		FRESULT status = f_mount(&mFatfsObj, &drive, 1);

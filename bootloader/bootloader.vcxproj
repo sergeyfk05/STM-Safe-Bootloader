@@ -83,6 +83,7 @@
     <ClCompile Include="fatfs.c" />
     <ClCompile Include="FirmwareReaderFromFlash.cpp" />
     <ClCompile Include="FirmwareReaderFromSD.cpp" />
+    <ClCompile Include="FirmwareReaderFromSDWithCRC.cpp" />
     <ClCompile Include="ReaderResult.cpp" />
     <ClCompile Include="sd_diskio.c" />
     <ClCompile Include="system_stm32f4xx.c" />
@@ -90,6 +91,7 @@
     <ClInclude Include="fatfs.h" />
     <ClInclude Include="ffconf.h" />
     <ClInclude Include="FirmwareReaderFromFlash.h" />
+    <ClInclude Include="FirmwareReaderFromSDWithCRC.h" />
     <ClInclude Include="IFirmwareReader.h" />
     <ClInclude Include="ReaderResult.h" />
     <ClInclude Include="OperationType.h" />

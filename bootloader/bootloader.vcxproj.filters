@@ -741,6 +741,9 @@
     <ClCompile Include="sd_diskio.c">
       <Filter>Source files\Device-specific files\FatFs</Filter>
     </ClCompile>
+    <ClCompile Include="FirmwareReaderFromSDWithCRC.cpp">
+      <Filter>Source files\Device-specific files\Firmware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ReaderResult.h">
@@ -769,6 +772,9 @@
     </ClInclude>
     <ClInclude Include="ffconf.h">
       <Filter>Header files\Device-specific files\FatFs</Filter>
+    </ClInclude>
+    <ClInclude Include="FirmwareReaderFromSDWithCRC.h">
+      <Filter>Header files\Device-specific files\Firmware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

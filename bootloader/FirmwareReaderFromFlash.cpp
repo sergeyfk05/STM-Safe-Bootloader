@@ -13,8 +13,11 @@ namespace Firmware
 		return;
 	}
 	
-	void FirmwareReaderFromFlash::Init()
+	bool FirmwareReaderFromFlash::Init()
 	{	
+		if (mIsInit)
+			return true;
+		
 		HAL_FLASH_Unlock();
 		__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);	
 		
@@ -64,8 +67,8 @@ namespace Firmware
 	bool FirmwareReaderFromFlash::Write(OperationType typeWrite, uint64_t value)
 	{		
 		//init check
-		if(!mIsInit)
-			Init();
+		if(!Init())
+			return false;
 		
 		HAL_FLASH_Unlock();
 		__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);	

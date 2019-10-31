@@ -22,7 +22,10 @@ namespace Firmware
 		  * 
 		  * @retval ReaderResult firmware bytes
 		  */
-		virtual bool Write(OperationType typeWrite, uint64_t value) = 0;
+		virtual bool Write(OperationType typeWrite, uint64_t value)
+		{
+			return true;
+		}
 		
 		/**
 		  * @brief  Shift pointer of firmware.

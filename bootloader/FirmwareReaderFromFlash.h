@@ -70,7 +70,7 @@ extern "C" {
 			const uint32_t mStartAddress;
 			uint32_t mOffset;	
 			bool mIsInit;
-			void Init();
+			bool Init();
 		};
 	}
 	

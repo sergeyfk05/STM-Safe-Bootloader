@@ -27,14 +27,13 @@ extern "C" {
 			  */
 			ReaderResult* Read(OperationType typeRead);
 			
-			/**
-			  * @brief  Write the firmware.
-			  * @param  typeRead  Indicate the count of write byte need.
-			  * 
-			  * @retval ReaderResult firmware bytes
-			  */
-			bool Write(OperationType typeWrite, uint64_t value);
-			
+//			/**
+//			  * @brief  Write the firmware.
+//			  * @param  typeRead  Indicate the count of write byte need.
+//			  * 
+//			  * @retval ReaderResult firmware bytes
+//			  */
+//			bool Write(OperationType typeWrite, uint64_t value);			
 			
 			/**
 			  * @brief  Shift pointer of firmware.
@@ -47,22 +46,22 @@ extern "C" {
 			/**
 			  * @brief  Reset state.
 			  */
-			void Reset();
+			void Reset();			
 			
 			~FirmwareReaderFromSD();
 		
-		private:
+		protected:
 			FATFS mFatfsObj;
 			FIL mAppFile;
-			TCHAR mFileName[258];
-			bool mIsInit;
-			
 			/**
 			  * @brief  Init variables for read firmware.
 			  * 
 			  * @retval bool If true - all is OK. If false - error.
 			  */
 			bool Init();
+		private:
+			TCHAR mFileName[258];
+			bool mIsInit;
 		};
 	}
 #ifdef __cplusplus

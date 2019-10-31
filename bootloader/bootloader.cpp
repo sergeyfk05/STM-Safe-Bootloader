@@ -1,7 +1,7 @@
 #include <stm32f4xx_hal.h>
 #include <stm32_hal_legacy.h>
 #include <stm32f4xx_hal_flash.h>
-#include "FirmwareReaderFromSD.h"
+#include "FirmwareReaderFromSDWithCRC.h"
 #include "FirmwareReaderFromFlash.h"
 
 #include "fatfs.h"
@@ -56,8 +56,7 @@ int main()
 
 	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 };              //APP.bin
 	IFirmwareReader* sdReader = new FirmwareReaderFromSD(file);	
-	IFirmwareReader* flashReader = new FirmwareReaderFromFlash(FLASH_USER_START_ADDR);
-	
+	IFirmwareReader* flashReader = new FirmwareReaderFromFlash(FLASH_USER_START_ADDR);	
 
 		
 	CheckFirmwareAndCopy(sdReader, flashReader, &CopyFirmware);
@@ -195,8 +194,6 @@ void CheckFirmwareAndCopy(IFirmwareReader* source, IFirmwareReader* destination,
 		copyMethod(source, destination);
 }
 
-
-
 void PeriphDeInit(void)
 {
 	HAL_SD_DeInit(&hsd);
@@ -204,7 +201,6 @@ void PeriphDeInit(void)
 	HAL_GPIO_DeInit(GPIOD, GPIO_PIN_2);
 	HAL_DeInit();
 }
-
 
 void GoToUserApp(void)
 {	
