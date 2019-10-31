@@ -32,10 +32,11 @@ namespace Firmware
 		
 		mIsInit = true;
 		HAL_FLASH_Lock();
+		return true;
 	}
 	
 	ReaderResult* FirmwareReaderFromFlash::Read(OperationType typeRead)
-	{
+	{		
 		ReaderResult* result = new ReaderResult(typeRead);
 		
 		//check for going outside the address

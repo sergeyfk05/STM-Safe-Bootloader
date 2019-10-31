@@ -26,7 +26,7 @@ extern "C" void SysTick_Handler(void)
 #define FLASH_MAX_SIZE		0x00080000					//Max FLASH size - 512 Kbyte
 #define FLASH_END_ADDR		(FLASH_START_ADDR + FLASH_MAX_SIZE)		//FLASH end address
 #define FLASH_BOOT_START_ADDR	(FLASH_START_ADDR)				//Bootloader start address
-#define FLASH_BOOT_SIZE		0x00008000					//64 Kbyte for bootloader
+#define FLASH_BOOT_SIZE		0x00010000					//64 Kbyte for bootloader
 #define FLASH_USER_START_ADDR	(FLASH_BOOT_START_ADDR + FLASH_BOOT_SIZE)	//User application start address
 #define FLASH_USER_SIZE (FLASH_MAX_SIZE - FLASH_BOOT_SIZE)   //all free memory for user application
 #define FLASH_OTHER_START_ADDR	(FLASH_MSD_START_ADDR + FLASH_MSD_SIZE)		//Other free memory start address
@@ -55,7 +55,7 @@ int main()
 	FATFS_Init();	
 
 	TCHAR file[] = { 65, 80, 80, 46, 98, 105, 110, 0 };              //APP.bin
-	IFirmwareReader* sdReader = new FirmwareReaderFromSD(file);	
+	IFirmwareReader* sdReader = new FirmwareReaderFromSDWithCRC(file);	
 	IFirmwareReader* flashReader = new FirmwareReaderFromFlash(FLASH_USER_START_ADDR);	
 
 		
@@ -146,7 +146,7 @@ void CheckFirmwareAndCopy(IFirmwareReader* source, IFirmwareReader* destination,
 			//compare source and destination data values
 			for(uint8_t i = 0 ; i < readType ; i++)
 			{
-				if (*(uint8_t*)sourceResult->data != *(uint8_t*)destinationResult->data)
+				if (*((uint8_t*)sourceResult->data + i) != *((uint8_t*)destinationResult->data + i))
 				{
 					isEqual = false;
 					break;
